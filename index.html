@@ -1,0 +1,366 @@
+# regalo-navidad<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Regalo Navideño 🎄</title>
+
+  <style>
+    :root{
+      --bg:#1f2428;
+      --panel:#0b0f14;
+      --green:#00ff00;
+      --red:#ff2a2a;
+      --blue:#00b7ff;
+      --yellow:#ffd200;
+      --orange:#ff8a00;
+      --text:#e8e8e8;
+      --muted:#aeb7c2;
+      --border:#273140;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100svh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:14px;
+      background:var(--panel);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      color:var(--text);
+    }
+    .wrap{
+      width:min(900px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    .top{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#0f1622;
+    }
+    .left{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .dots{ display:flex; gap:8px; }
+    .dot{ width:10px;height:10px;border-radius:50%; }
+    .redDot{ background:#ff5f57; }
+    .yellowDot{ background:#febc2e; }
+    .greenDot{ background:#28c840; }
+    .title{
+      font-size:13px; opacity:.9;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      max-width:55vw;
+    }
+    button{
+      appearance:none;
+      border:1px solid var(--border);
+      background:#162234;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:10px;
+      font-weight:800;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      touch-action:manipulation;
+    }
+    button:active{ transform:scale(.99); }
+    button:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .hint{
+      width:100%;
+      font-size:12px;
+      color:var(--muted);
+      text-align:center;
+    }
+
+    .screen{
+      width:100%;
+      background:var(--bg);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:14px;
+      box-shadow:0 16px 40px rgba(0,0,0,.35);
+    }
+
+    .log{
+      font-size: clamp(12px, 3.2vw, 16px);
+      line-height:1.25;
+      white-space:pre-wrap;
+      text-align:left;
+      margin:0;
+      min-height: 4.2em;
+    }
+
+    .treeWrap{
+      display:flex;
+      justify-content:center;
+      width:100%;
+      padding-top:8px;
+    }
+    .tree{
+      font-size: clamp(13px, 3.6vw, 20px);
+      line-height:1.05;
+      white-space:pre;
+      text-align:center;
+      margin:0;
+      overflow:auto;
+      max-height: 58svh;
+      padding-bottom:6px;
+    }
+
+    .g{ color:var(--green); }
+    .r{ color:var(--red); }
+    .b{ color:var(--blue); }
+    .y{ color:var(--yellow); }
+    .o{ color:var(--orange); }
+
+    .footerRow{
+      width:100%;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      padding:0 4px;
+    }
+    .small{ font-size:12px; color:var(--muted); }
+    .toggle{ display:flex; align-items:center; gap:8px; user-select:none; margin-left:auto; }
+    input[type="checkbox"]{ width:18px;height:18px; accent-color:#6aa9ff; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="left">
+        <div class="dots">
+          <span class="dot redDot"></span>
+          <span class="dot yellowDot"></span>
+          <span class="dot greenDot"></span>
+        </div>
+        <div class="title">navidad.exe — consola</div>
+      </div>
+      <button id="runBtn">▶ RUN</button>
+    </div>
+
+    <div class="hint" id="hintText">Presiona <b>RUN</b> para iniciar 🎄</div>
+
+    <div class="screen">
+      <div id="log" class="log"></div>
+      <div class="treeWrap">
+        <div id="tree" class="tree"></div>
+      </div>
+    </div>
+
+    <div class="footerRow">
+      <div class="small">Tip: Si no escuchas música, revisa el volumen del celular.</div>
+      <label class="toggle small">
+        <input id="musicToggle" type="checkbox" checked />
+        Música (on/off)
+      </label>
+    </div>
+  </div>
+
+<script>
+  // ========= PERSONALIZA =========
+  const YEAR = "2025";
+  const FINAL_LINE_1 = "MERRY CHRISTMAS";
+  const FINAL_LINE_2 = `And lots of CODE in ${YEAR}`;
+
+  const CHAR_DELAY_MS = 10;
+  const LINE_PAUSE_MS = 70;
+
+  // ========= ARTE =========
+  const art = [
+"               *",
+"              *o*",
+"             *o*o*",
+"            ***o***",
+"           *o*****o*",
+"          ***o***o***",
+"         *o***o*o***o*",
+"        *o*o*o*****o*o*",
+"       *o***o***o***o***o*",
+"      *o*o*o*o*****o*o*o*o*",
+"     *o***o***o***o***o***o*",
+"    *o*o*o*o*o*****o*o*o*o*o*",
+"",
+"              mWm",
+"              mWm",
+"",
+`         ${FINAL_LINE_1}`,
+`      ${FINAL_LINE_2}`
+  ];
+  const ornamentColors = ["b","r","y","o"];
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+  function esc(s){
+    return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+            .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+  function colorChar(ch, i, lineIndex, wholeLine){
+    if(wholeLine.includes(FINAL_LINE_1) || wholeLine.includes(FINAL_LINE_2)) return "r";
+    if(ch === "*") return "g";
+    if(ch === "o") return ornamentColors[(i + lineIndex*3) % ornamentColors.length];
+    if("mW".includes(ch)) return "y";
+    return null;
+  }
+  function logLine(s){
+    const log = document.getElementById("log");
+    log.textContent += (log.textContent ? "\n" : "") + s;
+  }
+  async function typeTreeLine(line, lineIndex){
+    const tree = document.getElementById("tree");
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      const cls = colorChar(ch, i, lineIndex, line);
+      const safeChar = (ch === " ") ? "&nbsp;" : esc(ch);
+      tree.innerHTML += cls ? `<span class="${cls}">${safeChar}</span>` : safeChar;
+      await sleep(CHAR_DELAY_MS);
+    }
+    tree.innerHTML += "<br/>";
+  }
+
+  // ========= MÚSICA POR CÓDIGO (10s) =========
+  // Cambia aquí la melodía: notas y tiempos (en segundos).
+  // Nota: usa frecuencias (A4=440). Te dejo una melodía tipo villancico simple.
+  const MELODY = [
+    // freq, duration
+    [659.25, 0.25], [659.25, 0.25], [659.25, 0.50], // E E E
+    [659.25, 0.25], [659.25, 0.25], [659.25, 0.50], // E E E
+    [659.25, 0.25], [783.99, 0.25], [523.25, 0.25], [587.33, 0.25], [659.25, 1.0], // E G C D E
+    [698.46, 0.25], [698.46, 0.25], [698.46, 0.50], // F F F
+    [698.46, 0.25], [659.25, 0.25], [659.25, 0.50], // F E E
+    [659.25, 0.25], [587.33, 0.25], [587.33, 0.50], // E D D
+    [659.25, 0.25], [587.33, 0.25], [783.99, 0.50], // E D G
+  ];
+
+  let audioCtx = null;
+  let master = null;
+  let playingNodes = [];
+  let stopTimer = null;
+
+  function stopMusic(){
+    if(stopTimer) clearTimeout(stopTimer);
+    stopTimer = null;
+
+    // apaga nodos
+    playingNodes.forEach(n => { try{ n.stop(); }catch(e){} });
+    playingNodes = [];
+
+    // baja volumen suave
+    try{
+      if(master && audioCtx){
+        master.gain.cancelScheduledValues(audioCtx.currentTime);
+        master.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.03);
+      }
+    }catch(e){}
+  }
+
+  function ensureAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      master = audioCtx.createGain();
+      master.gain.value = 0.12; // volumen general (ajusta)
+      master.connect(audioCtx.destination);
+    }
+  }
+
+  function playMusic10s(){
+    const toggle = document.getElementById("musicToggle");
+    if(!toggle.checked) return;
+
+    ensureAudio();
+
+    // si estaba pausado por políticas, reanuda
+    if(audioCtx.state === "suspended") audioCtx.resume();
+
+    stopMusic(); // reinicia
+
+    const startAt = audioCtx.currentTime + 0.03;
+    let t = startAt;
+
+    // pequeña campanita de inicio
+    beep(1046.5, 0.08, t); t += 0.10;
+
+    // melodía
+    for(const [freq, dur] of MELODY){
+      beep(freq, dur, t);
+      t += dur * 1.05;
+      if(t - startAt >= 9.7) break; // para que no pase de 10s
+    }
+
+    // cortar a 10s exactos
+    stopTimer = setTimeout(stopMusic, 10000);
+  }
+
+  function beep(freq, dur, when){
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    // forma de onda suave
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, when);
+
+    // envolvente (ataque/decay) para que no suene “chicharra”
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(0.18, when + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+
+    osc.connect(gain);
+    gain.connect(master);
+
+    osc.start(when);
+    osc.stop(when + dur + 0.02);
+
+    playingNodes.push(osc);
+  }
+
+  document.getElementById("musicToggle").addEventListener("change", (e) => {
+    if(!e.target.checked) stopMusic();
+  });
+
+  // ========= RUN =========
+  async function run(){
+    const btn = document.getElementById("runBtn");
+    const hint = document.getElementById("hintText");
+    const tree = document.getElementById("tree");
+    const log = document.getElementById("log");
+
+    btn.disabled = true;
+    hint.textContent = "Ejecutando… ✨";
+    tree.innerHTML = "";
+    log.textContent = "";
+
+    logLine("> RUN pressed ✅");
+    logLine("> initializing christmas_tree.exe");
+    await sleep(200);
+    logLine("> compiling magic...");
+    await sleep(200);
+    logLine("> rendering tree...");
+    await sleep(250);
+
+    for(let i=0;i<art.length;i++){
+      await typeTreeLine(art[i], i);
+      await sleep(LINE_PAUSE_MS);
+    }
+
+    hint.textContent = "🎁 Listo. Feliz Navidad.";
+  }
+
+  document.getElementById("runBtn").addEventListener("click", () => {
+    playMusic10s(); // ✅ música 10s, sin archivos, sin links
+    run();
+  });
+</script>
+</body>
+</html>
