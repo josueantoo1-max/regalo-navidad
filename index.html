@@ -1,4 +1,4 @@
-# regalo-navidad<!doctype html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8" />
@@ -19,6 +19,7 @@
       --border:#273140;
     }
     *{ box-sizing:border-box; }
+
     body{
       margin:0;
       min-height:100svh;
@@ -30,12 +31,14 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
       color:var(--text);
     }
+
     .wrap{
       width:min(900px, 100%);
       display:flex;
       flex-direction:column;
       gap:12px;
     }
+
     .top{
       width:100%;
       display:flex;
@@ -47,17 +50,20 @@
       border-radius:12px;
       background:#0f1622;
     }
+
     .left{ display:flex; align-items:center; gap:10px; min-width:0; }
     .dots{ display:flex; gap:8px; }
     .dot{ width:10px;height:10px;border-radius:50%; }
     .redDot{ background:#ff5f57; }
     .yellowDot{ background:#febc2e; }
     .greenDot{ background:#28c840; }
+
     .title{
       font-size:13px; opacity:.9;
       white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
       max-width:55vw;
     }
+
     button{
       appearance:none;
       border:1px solid var(--border);
@@ -104,8 +110,9 @@
       display:flex;
       justify-content:center;
       width:100%;
-      padding-top:8px;
+      padding-top:10px;
     }
+
     .tree{
       font-size: clamp(13px, 3.6vw, 20px);
       line-height:1.05;
@@ -115,6 +122,8 @@
       overflow:auto;
       max-height: 58svh;
       padding-bottom:6px;
+      /* ✅ micro-ajuste: empuja un pelín a la izquierda si tu ojo lo necesita */
+      transform: translateX(-10px);
     }
 
     .g{ color:var(--green); }
@@ -135,6 +144,9 @@
     .small{ font-size:12px; color:var(--muted); }
     .toggle{ display:flex; align-items:center; gap:8px; user-select:none; margin-left:auto; }
     input[type="checkbox"]{ width:18px;height:18px; accent-color:#6aa9ff; }
+
+    /* YouTube player oculto (solo audio) */
+    #ytWrap{ position:absolute; width:1px; height:1px; overflow:hidden; left:-9999px; top:-9999px; }
   </style>
 </head>
 
@@ -170,6 +182,9 @@
     </div>
   </div>
 
+  <div id="ytWrap"><div id="ytplayer"></div></div>
+  <script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
   // ========= PERSONALIZA =========
   const YEAR = "2025";
@@ -179,27 +194,34 @@
   const CHAR_DELAY_MS = 10;
   const LINE_PAUSE_MS = 70;
 
-  // ========= ARTE =========
+  // ✅ YouTube: 10s
+  const YT_VIDEO_ID = "TcSk5ulP-hA";
+  const MUSIC_START_S = 0;
+  const MUSIC_END_S = 10;
+
+  // ========= ÁRBOL MÁS CENTRADO =========
+  // Le recorté espacios iniciales vs tu versión anterior para que quede mejor centrado.
   const art = [
-"               *",
-"              *o*",
-"             *o*o*",
-"            ***o***",
-"           *o*****o*",
-"          ***o***o***",
-"         *o***o*o***o*",
-"        *o*o*o*****o*o*",
-"       *o***o***o***o***o*",
-"      *o*o*o*o*****o*o*o*o*",
-"     *o***o***o***o***o***o*",
-"    *o*o*o*o*o*****o*o*o*o*o*",
+"          *",
+"         *o*",
+"        *o*o*",
+"       ***o***",
+"      *o*****o*",
+"     ***o***o***",
+"    *o***o*o***o*",
+"   *o*o*o*****o*o*",
+"  *o***o***o***o***o*",
+" *o*o*o*o*****o*o*o*o*",
+"*o***o***o***o***o***o*",
+"*o*o*o*o*o*****o*o*o*o*o*",
 "",
-"              mWm",
-"              mWm",
+"         mWm",
+"         mWm",
 "",
-`         ${FINAL_LINE_1}`,
-`      ${FINAL_LINE_2}`
+`      ${FINAL_LINE_1}`,
+`   ${FINAL_LINE_2}`
   ];
+
   const ornamentColors = ["b","r","y","o"];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -207,6 +229,7 @@
     return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
             .replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
+
   function colorChar(ch, i, lineIndex, wholeLine){
     if(wholeLine.includes(FINAL_LINE_1) || wholeLine.includes(FINAL_LINE_2)) return "r";
     if(ch === "*") return "g";
@@ -214,10 +237,12 @@
     if("mW".includes(ch)) return "y";
     return null;
   }
+
   function logLine(s){
     const log = document.getElementById("log");
     log.textContent += (log.textContent ? "\n" : "") + s;
   }
+
   async function typeTreeLine(line, lineIndex){
     const tree = document.getElementById("tree");
     for(let i=0;i<line.length;i++){
@@ -230,99 +255,61 @@
     tree.innerHTML += "<br/>";
   }
 
-  // ========= MÚSICA POR CÓDIGO (10s) =========
-  // Cambia aquí la melodía: notas y tiempos (en segundos).
-  // Nota: usa frecuencias (A4=440). Te dejo una melodía tipo villancico simple.
-  const MELODY = [
-    // freq, duration
-    [659.25, 0.25], [659.25, 0.25], [659.25, 0.50], // E E E
-    [659.25, 0.25], [659.25, 0.25], [659.25, 0.50], // E E E
-    [659.25, 0.25], [783.99, 0.25], [523.25, 0.25], [587.33, 0.25], [659.25, 1.0], // E G C D E
-    [698.46, 0.25], [698.46, 0.25], [698.46, 0.50], // F F F
-    [698.46, 0.25], [659.25, 0.25], [659.25, 0.50], // F E E
-    [659.25, 0.25], [587.33, 0.25], [587.33, 0.50], // E D D
-    [659.25, 0.25], [587.33, 0.25], [783.99, 0.50], // E D G
-  ];
-
-  let audioCtx = null;
-  let master = null;
-  let playingNodes = [];
+  // ========= MÚSICA: YouTube 10s =========
+  let player = null;
   let stopTimer = null;
+  let pendingPlay = false;
+
+  window.onYouTubeIframeAPIReady = function(){
+    player = new YT.Player("ytplayer", {
+      height:"0",
+      width:"0",
+      videoId: YT_VIDEO_ID,
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        rel: 0,
+        modestbranding: 1,
+        playsinline: 1
+      },
+      events: {
+        onReady: () => {
+          if(pendingPlay){
+            pendingPlay = false;
+            playMusic10s();
+          }
+        }
+      }
+    });
+  };
 
   function stopMusic(){
     if(stopTimer) clearTimeout(stopTimer);
     stopTimer = null;
-
-    // apaga nodos
-    playingNodes.forEach(n => { try{ n.stop(); }catch(e){} });
-    playingNodes = [];
-
-    // baja volumen suave
-    try{
-      if(master && audioCtx){
-        master.gain.cancelScheduledValues(audioCtx.currentTime);
-        master.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.03);
-      }
-    }catch(e){}
-  }
-
-  function ensureAudio(){
-    if(!audioCtx){
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      master = audioCtx.createGain();
-      master.gain.value = 0.12; // volumen general (ajusta)
-      master.connect(audioCtx.destination);
-    }
+    try{ if(player) player.stopVideo(); }catch(e){}
   }
 
   function playMusic10s(){
     const toggle = document.getElementById("musicToggle");
     if(!toggle.checked) return;
 
-    ensureAudio();
-
-    // si estaba pausado por políticas, reanuda
-    if(audioCtx.state === "suspended") audioCtx.resume();
-
-    stopMusic(); // reinicia
-
-    const startAt = audioCtx.currentTime + 0.03;
-    let t = startAt;
-
-    // pequeña campanita de inicio
-    beep(1046.5, 0.08, t); t += 0.10;
-
-    // melodía
-    for(const [freq, dur] of MELODY){
-      beep(freq, dur, t);
-      t += dur * 1.05;
-      if(t - startAt >= 9.7) break; // para que no pase de 10s
+    if(!player || typeof player.playVideo !== "function"){
+      pendingPlay = true; // si aún no carga YouTube, lo reproduce cuando esté listo
+      return;
     }
 
-    // cortar a 10s exactos
-    stopTimer = setTimeout(stopMusic, 10000);
-  }
+    stopMusic();
+    try{
+      player.seekTo(MUSIC_START_S, true);
+      player.playVideo();
 
-  function beep(freq, dur, when){
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-
-    // forma de onda suave
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(freq, when);
-
-    // envolvente (ataque/decay) para que no suene “chicharra”
-    gain.gain.setValueAtTime(0.0001, when);
-    gain.gain.exponentialRampToValueAtTime(0.18, when + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
-
-    osc.connect(gain);
-    gain.connect(master);
-
-    osc.start(when);
-    osc.stop(when + dur + 0.02);
-
-    playingNodes.push(osc);
+      const durationMs = Math.max(0, (MUSIC_END_S - MUSIC_START_S) * 1000);
+      stopTimer = setTimeout(() => {
+        try{ player.stopVideo(); }catch(e){}
+      }, durationMs);
+    }catch(e){
+      // si el navegador bloquea, no rompemos el resto
+    }
   }
 
   document.getElementById("musicToggle").addEventListener("change", (e) => {
@@ -358,7 +345,7 @@
   }
 
   document.getElementById("runBtn").addEventListener("click", () => {
-    playMusic10s(); // ✅ música 10s, sin archivos, sin links
+    playMusic10s(); // ✅ YouTube 10s
     run();
   });
 </script>
