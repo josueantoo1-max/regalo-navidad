@@ -114,7 +114,7 @@
       padding-top:10px;
     }
 
-    /* ✅ Centro real: el árbol es inline-block dentro de flex center */
+    /* ✅ Centro real: inline-block dentro de flex center */
     .tree{
       display:inline-block;
       font-size: clamp(13px, 3.6vw, 20px);
@@ -125,6 +125,7 @@
       overflow:auto;
       max-height: 58svh;
       padding-bottom:6px;
+      user-select:none;
     }
 
     .g{ color:var(--green); }
@@ -146,7 +147,6 @@
     .toggle{ display:flex; align-items:center; gap:8px; user-select:none; margin-left:auto; }
     input[type="checkbox"]{ width:18px;height:18px; accent-color:#6aa9ff; }
 
-    /* Aviso audio */
     .audioAlert{
       margin-top:10px;
       padding:10px 12px;
@@ -172,7 +172,6 @@
       background:#162234;
       font-weight:700;
     }
-    .audioAlert a:active{ transform:scale(.99); }
 
     /* YouTube player oculto */
     #ytWrap{ position:absolute; width:1px; height:1px; overflow:hidden; left:-9999px; top:-9999px; }
@@ -205,7 +204,7 @@
       <div id="audioAlert" class="audioAlert">
         <div>
           <strong>Audio bloqueado por el navegador.</strong><br>
-          Si no escuchas música, abre el audio en YouTube o desactiva el bloqueo de audio/seguimiento para este sitio.
+          Abre el audio en YouTube o desactiva bloqueo/seguimiento para este sitio.
         </div>
         <div class="btnRow">
           <a id="ytOpen" href="#" target="_blank" rel="noopener">Abrir en YouTube</a>
@@ -242,8 +241,8 @@
   const MUSIC_START_S = 0;
   const MUSIC_END_S = 10;
 
-  // Árbol (isosceles)
-  const TREE_HEIGHT = 12; // sube/baja
+  // Árbol (triángulo isósceles)
+  const TREE_HEIGHT = 12;
   const TRUNK_HEIGHT = 2;
 
   // =========================
@@ -251,6 +250,7 @@
   // =========================
   const ornamentColors = ["b","r","y","o"];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
   function esc(s){
     return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
             .replaceAll('"',"&quot;").replaceAll("'","&#039;");
@@ -261,84 +261,76 @@
     log.textContent += (log.textContent ? "\n" : "") + s;
   }
 
-  // =========================
-  // 3) Árbol isósceles centrado (GENERADO)
-  // =========================
-function buildTreeLines(h){
-  const width = 2*h - 1;
-  const lines = [];
-
-  // estrella
-  lines.push(centerLine("^", width));
-
-  // copa (triángulo isósceles perfecto)
-  for(let i=1;i<=h;i++){
-    const leafCount = 2*i - 1;
-    const spaces = (width - leafCount) / 2;
-
-    let row = " ".repeat(spaces);
-    for(let k=0;k<leafCount;k++){
-      const pick = (i*13 + k*7) % 12;
-      row += (pick === 0 || pick === 5) ? "o" : "*";
-    }
-    row += " ".repeat(spaces);
-    lines.push(row);
-  }
-
-  // 👉 BASE EXACTA DEL TRIÁNGULO (última fila)
-  const baseWidth = 2*h - 1;
-
-  // 👉 TRONCO MÁS ANGOSTO Y CENTRADO AL VÉRTICE
-  const trunkWidth = 3; // mWm exacto
-  const trunkPad = Math.floor((baseWidth - trunkWidth) / 2);
-
-  for(let t=0; t<2; t++){
-    lines.push(
-      " ".repeat(trunkPad) +
-      "mWm" +
-      " ".repeat(baseWidth - trunkPad - trunkWidth)
-    );
-  }
-
-  // espacio
-  lines.push("");
-
-  // texto centrado al MISMO ancho del árbol
-  lines.push(centerLine(FINAL_LINE_1, baseWidth));
-  lines.push(centerLine(FINAL_LINE_2, baseWidth));
-
-  return { lines, width: baseWidth };
-}
-
-    // tronco
-    const trunkWidth = Math.max(3, Math.floor(width * 0.14) | 1); // impar
-    const trunk = "mWm".slice(0, Math.min(3, trunkWidth)); // estilo original
-    const trunkPad = Math.floor((width - trunk.length)/2);
-    for(let t=0;t<TRUNK_HEIGHT;t++){
-      lines.push(" ".repeat(trunkPad) + trunk + " ".repeat(width - trunkPad - trunk.length));
-    }
-
-    // espacio
-    lines.push("");
-    // texto final centrado al ancho del árbol
-    lines.push(centerLine(FINAL_LINE_1, width));
-    lines.push(centerLine(FINAL_LINE_2, width));
-
-    return { lines, width };
-  }
-
   function centerLine(text, width){
     if(text.length >= width) return text;
     const pad = Math.floor((width - text.length)/2);
     return " ".repeat(pad) + text + " ".repeat(width - pad - text.length);
   }
 
+  function rightMostNonSpaceIndex(s){
+    for(let i=s.length-1;i>=0;i--) if(s[i] !== " ") return i;
+    return -1;
+  }
+
+  // =========================
+  // 3) Árbol isósceles + tronco centrado en BASE REAL (marca azul)
+  // =========================
+  function buildTreeLines(h){
+    const width = 2*h - 1;
+    const lines = [];
+
+    // estrella
+    lines.push(centerLine("^", width));
+
+    // copa isósceles
+    for(let i=1;i<=h;i++){
+      const leafCount = 2*i - 1;
+      const spaces = (width - leafCount) / 2;
+
+      let row = " ".repeat(spaces);
+      for(let k=0;k<leafCount;k++){
+        const pick = (i*13 + k*7) % 12;
+        row += (pick === 0 || pick === 5) ? "o" : "*";
+      }
+      row += " ".repeat(spaces);
+      lines.push(row);
+    }
+
+    // ✅ Tronco centrado sobre la BASE REAL (última fila de hojas)
+    const baseLine = lines[lines.length - 1]; // última fila de hojas
+    const left = baseLine.search(/\S/);       // primer visible
+    const right = rightMostNonSpaceIndex(baseLine); // último visible
+    const baseCenter = Math.floor((left + right) / 2);
+
+    const trunkStr = "mWm";
+    const trunkWidth = trunkStr.length;
+    const trunkStart = baseCenter - Math.floor(trunkWidth / 2);
+
+    for(let t=0; t<TRUNK_HEIGHT; t++){
+      const row = Array(baseLine.length).fill(" ");
+      for(let i=0;i<trunkWidth;i++){
+        const idx = trunkStart + i;
+        if(idx >= 0 && idx < row.length) row[idx] = trunkStr[i];
+      }
+      lines.push(row.join(""));
+    }
+
+    // espacio
+    lines.push("");
+
+    // texto centrado al mismo ancho
+    lines.push(centerLine(FINAL_LINE_1, width));
+    lines.push(centerLine(FINAL_LINE_2, width));
+
+    return { lines, width };
+  }
+
   function colorChar(ch, i, lineIndex, wholeLine){
     if(wholeLine.includes(FINAL_LINE_1) || wholeLine.includes(FINAL_LINE_2)) return "r";
-    if(ch === "^") return "y";           // estrella
-    if(ch === "*") return "g";           // hojas
+    if(ch === "^") return "y";
+    if(ch === "*") return "g";
     if(ch === "o") return ornamentColors[(i + lineIndex*3) % ornamentColors.length];
-    if("mW".includes(ch)) return "y";    // tronco
+    if("mW".includes(ch)) return "y";
     return null;
   }
 
@@ -355,7 +347,7 @@ function buildTreeLines(h){
   }
 
   // =========================
-  // 4) Música: YouTube 10s + fallback (WebAudio) si se bloquea
+  // 4) Música: YouTube 10s (más compatible)
   // =========================
   let player = null;
   let stopTimer = null;
@@ -366,70 +358,9 @@ function buildTreeLines(h){
   const retryAudio = document.getElementById("retryAudio");
   ytOpen.href = `https://www.youtube.com/watch?v=${YT_VIDEO_ID}`;
 
-  function showAudioAlert(){
-    audioAlert.style.display = "flex";
-  }
-  function hideAudioAlert(){
-    audioAlert.style.display = "none";
-  }
+  function showAudioAlert(){ audioAlert.style.display = "flex"; }
+  function hideAudioAlert(){ audioAlert.style.display = "none"; }
 
-  // --- WebAudio fallback (suave, 10s) ---
-  let audioCtx = null, master = null, stopSynthTimer = null;
-  function ensureAudio(){
-    if(!audioCtx){
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      master = audioCtx.createGain();
-      master.gain.value = 0.10;
-      master.connect(audioCtx.destination);
-    }
-  }
-  function stopSynth(){
-    if(stopSynthTimer) clearTimeout(stopSynthTimer);
-    stopSynthTimer = null;
-    try{
-      if(master && audioCtx){
-        master.gain.cancelScheduledValues(audioCtx.currentTime);
-        master.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.03);
-      }
-    }catch(e){}
-  }
-  function playSynth10s(){
-    ensureAudio();
-    if(audioCtx.state === "suspended") audioCtx.resume();
-
-    const start = audioCtx.currentTime + 0.03;
-    // mini-melodía suave tipo campanitas
-    const seq = [
-      [659.25,0.22],[659.25,0.22],[659.25,0.45],
-      [659.25,0.22],[659.25,0.22],[659.25,0.45],
-      [659.25,0.22],[783.99,0.22],[523.25,0.22],[587.33,0.22],[659.25,0.80],
-    ];
-    let t = start;
-
-    for(const [f,d] of seq){
-      beep(f,d,t);
-      t += d*1.08;
-      if(t-start > 9.6) break;
-    }
-    stopSynthTimer = setTimeout(stopSynth, 10000);
-  }
-  function beep(freq, dur, when){
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(freq, when);
-
-    gain.gain.setValueAtTime(0.0001, when);
-    gain.gain.exponentialRampToValueAtTime(0.15, when + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
-
-    osc.connect(gain);
-    gain.connect(master);
-    osc.start(when);
-    osc.stop(when + dur + 0.02);
-  }
-
-  // --- YouTube API ---
   window.onYouTubeIframeAPIReady = function(){
     player = new YT.Player("ytplayer", {
       height:"0",
@@ -458,7 +389,6 @@ function buildTreeLines(h){
     if(stopTimer) clearTimeout(stopTimer);
     stopTimer = null;
     try{ if(player) player.stopVideo(); }catch(e){}
-    stopSynth();
   }
 
   function playMusic10s(){
@@ -468,11 +398,9 @@ function buildTreeLines(h){
     hideAudioAlert();
     stopMusic();
 
-    // si YouTube no está listo aún
     if(!player || typeof player.playVideo !== "function"){
       pendingPlay = true;
-      // mientras carga, ponemos fallback suave (para no dejar silencio)
-      playSynth10s();
+      showAudioAlert();
       return;
     }
 
@@ -482,19 +410,23 @@ function buildTreeLines(h){
       player.setVolume(80);
       player.playVideo();
 
-      // ✅ detector de bloqueo: si en ~1s no está sonando, mostramos alerta y usamos fallback
+      // reintento rápido (Safari/Firefox a veces lo necesita)
+      setTimeout(() => {
+        try{
+          player.unMute();
+          player.setVolume(80);
+          player.playVideo();
+        }catch(e){}
+      }, 300);
+
+      // detector: si no quedó en "playing", avisamos
       setTimeout(() => {
         try{
           const state = player.getPlayerState(); // 1 = playing
           const muted = player.isMuted && player.isMuted();
-          if(state !== 1 || muted){
-            showAudioAlert();
-            // fallback para que siempre haya música
-            playSynth10s();
-          }
+          if(state !== 1 || muted) showAudioAlert();
         }catch(e){
           showAudioAlert();
-          playSynth10s();
         }
       }, 900);
 
@@ -503,9 +435,7 @@ function buildTreeLines(h){
         try{ player.stopVideo(); }catch(e){}
       }, durationMs);
     }catch(e){
-      // bloqueado: mostramos alerta + fallback
       showAudioAlert();
-      playSynth10s();
     }
   }
 
@@ -550,7 +480,7 @@ function buildTreeLines(h){
   }
 
   document.getElementById("runBtn").addEventListener("click", () => {
-    playMusic10s(); // YouTube 10s (y fallback si el navegador lo bloquea)
+    playMusic10s(); // YouTube 10s
     run();
   });
 </script>
