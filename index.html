@@ -33,8 +33,15 @@
     }
     .wrap{ width:min(900px, 100%); display:flex; flex-direction:column; gap:12px; }
     .top{
-      width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--card);
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--card);
     }
     .left{ display:flex; align-items:center; gap:10px; min-width:0; }
     .dots{ display:flex; gap:8px; }
@@ -43,9 +50,18 @@
     .title{ font-size:13px; opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:55vw; }
 
     button{
-      appearance:none; border:1px solid var(--border); background:#162234; color:var(--text);
-      padding:10px 12px; border-radius:10px; font-weight:800; cursor:pointer;
-      display:flex; align-items:center; gap:8px; touch-action:manipulation;
+      appearance:none;
+      border:1px solid var(--border);
+      background:#162234;
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:10px;
+      font-weight:800;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      touch-action:manipulation;
     }
     button:active{ transform:scale(.99); }
     button:disabled{ opacity:.55; cursor:not-allowed; }
@@ -53,9 +69,14 @@
     .hint{ width:100%; font-size:12px; color:var(--muted); text-align:center; }
 
     .screen{
-      width:100%; background:var(--bg); border:1px solid var(--border); border-radius:12px;
-      padding:14px; box-shadow:0 16px 40px rgba(0,0,0,.35);
+      width:100%;
+      background:var(--bg);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:14px;
+      box-shadow:0 16px 40px rgba(0,0,0,.35);
     }
+
     .log{
       font-size: clamp(12px, 3.2vw, 16px);
       line-height:1.25;
@@ -64,6 +85,7 @@
       margin:0;
       min-height: 4.2em;
     }
+
     .treeWrap{ display:flex; justify-content:center; width:100%; padding-top:10px; }
     .tree{
       display:inline-block;
@@ -81,7 +103,13 @@
     .g{ color:var(--green); } .r{ color:var(--red); } .b{ color:var(--blue); } .y{ color:var(--yellow); } .o{ color:var(--orange); }
 
     .footerRow{
-      width:100%; display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; padding:0 4px;
+      width:100%;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      padding:0 4px;
     }
     .small{ font-size:12px; color:var(--muted); }
     .toggle{ display:flex; align-items:center; gap:8px; user-select:none; margin-left:auto; }
@@ -123,7 +151,7 @@
 
 <script>
   // =========================
-  // CONFIG
+  // CONFIG (TEXTO + ANIMACIÓN)
   // =========================
   const YEAR = "2025";
   const FINAL_LINE_1 = "MERRY CHRISTMAS";
@@ -137,7 +165,7 @@
   const TRUNK_HEIGHT = 2;
 
   // =========================
-  // HELPERS
+  // HELPERS UI
   // =========================
   const ornamentColors = ["b","r","y","o"];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -161,7 +189,7 @@
   }
 
   // =========================
-  // ÁRBOL isósceles + TRONCO centrado sobre BASE REAL (marca azul)
+  // ÁRBOL isósceles + TRONCO centrado sobre BASE REAL (tu "marca azul")
   // =========================
   function buildTreeLines(h){
     const width = 2*h - 1;
@@ -170,7 +198,7 @@
     // estrella
     lines.push(centerLine("^", width));
 
-    // copa
+    // copa (triángulo isósceles perfecto)
     for(let i=1;i<=h;i++){
       const leafCount = 2*i - 1;
       const spaces = (width - leafCount) / 2;
@@ -184,7 +212,7 @@
       lines.push(row);
     }
 
-    // tronco centrado al centro "real" de la base visible
+    // tronco: centrado en el centro REAL de la base visible
     const baseLine = lines[lines.length - 1];
     const left = baseLine.search(/\S/);
     const right = rightMostNonSpaceIndex(baseLine);
@@ -233,67 +261,132 @@
   }
 
   // =========================
-  // AUDIO (10s) por código: progresión B / Bmaj7 / F# / E @ 107 bpm
+  // AUDIO 10s (SIN YouTube)
+  // Objetivo: sonar MÁS fiel al intro (estilo "Roma") usando:
+  // - Progresión B / Bmaj7 / F# / E @ 107 bpm
+  // - Bajo + Pad + Arpegio con patrón musical
+  // - Delay suave (ambiente)
+  //
+  // Nota honesta: sin un MIDI/notas exactas de melodía, esto replica muy bien
+  // el "feel" del intro (armonía/ritmo/ambiente), pero no es 1:1 la voz/melodia.
   // =========================
-  let audioCtx = null, master = null, stopTimer = null;
+  let audioCtx = null, master = null, delay = null, feedback = null, wet = null;
+  let stopTimer = null;
+  let activeOsc = [];
 
   function ensureAudio(){
-    if(!audioCtx){
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      master = audioCtx.createGain();
-      master.gain.value = 0.10; // volumen suave
-      master.connect(audioCtx.destination);
-    }
+    if(audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    master = audioCtx.createGain();
+    master.gain.value = 0.12;
+    master.connect(audioCtx.destination);
+
+    // Delay (ambiente)
+    delay = audioCtx.createDelay(1.0);
+    delay.delayTime.value = 0.22;
+
+    feedback = audioCtx.createGain();
+    feedback.gain.value = 0.28;
+
+    wet = audioCtx.createGain();
+    wet.gain.value = 0.30;
+
+    delay.connect(feedback);
+    feedback.connect(delay);
+    delay.connect(wet);
+    wet.connect(master);
   }
+
   function stopRoma(){
     if(stopTimer) clearTimeout(stopTimer);
     stopTimer = null;
+
+    for(const o of activeOsc){
+      try{ o.stop(); }catch(e){}
+    }
+    activeOsc = [];
+
     try{
       if(master && audioCtx){
         master.gain.cancelScheduledValues(audioCtx.currentTime);
-        master.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.03);
+        master.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.04);
       }
     }catch(e){}
   }
+
   function m2f(m){ return 440 * Math.pow(2, (m-69)/12); }
 
-  function pluck(midi, when, dur, amp=0.14){
+  function makeVoice({type="triangle", detune=0, filterHz=1400}={}){
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(m2f(midi), when);
+    const filt = audioCtx.createBiquadFilter();
 
-    gain.gain.setValueAtTime(0.0001, when);
-    gain.gain.exponentialRampToValueAtTime(amp, when + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+    osc.type = type;
+    osc.detune.value = detune;
 
-    osc.connect(gain);
+    filt.type = "lowpass";
+    filt.frequency.value = filterHz;
+    filt.Q.value = 0.7;
+
+    osc.connect(filt);
+    filt.connect(gain);
+
+    // dry + wet
     gain.connect(master);
+    gain.connect(delay);
 
-    osc.start(when);
-    osc.stop(when + dur + 0.02);
+    return { osc, gain };
   }
 
-  function bell(midi, when, dur, amp=0.06){
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(m2f(midi), when);
-
-    gain.gain.setValueAtTime(0.0001, when);
-    gain.gain.exponentialRampToValueAtTime(amp, when + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
-
-    osc.connect(gain);
-    gain.connect(master);
-
-    osc.start(when);
-    osc.stop(when + dur + 0.02);
+  function env(gainNode, t0, dur, peak=0.12){
+    const g = gainNode.gain;
+    g.cancelScheduledValues(t0);
+    g.setValueAtTime(0.0001, t0);
+    g.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t0 + 0.012);
+    g.exponentialRampToValueAtTime(Math.max(peak*0.35, 0.0002), t0 + Math.max(0.04, dur*0.55));
+    g.exponentialRampToValueAtTime(0.0001, t0 + dur + 0.08);
   }
 
-  function arp(chord, start, step, count){
-    for(let i=0;i<count;i++){
-      pluck(chord[i % chord.length], start + i*step, step*0.95, 0.13);
+  function note({midi, when, dur, amp=0.10, type="triangle", detune=0, filterHz=1400}){
+    const v = makeVoice({type, detune, filterHz});
+    v.osc.frequency.setValueAtTime(m2f(midi), when);
+
+    env(v.gain, when, dur, amp);
+
+    v.osc.start(when);
+    v.osc.stop(when + dur + 0.12);
+
+    activeOsc.push(v.osc);
+  }
+
+  function chordPad({midis, when, dur, amp=0.035}){
+    // pad con 2 capas detune
+    for(const d of [-6, +6]){
+      for(const m of midis){
+        note({ midi:m, when, dur, amp, type:"sine", detune:d, filterHz:950 });
+      }
+    }
+  }
+
+  function bass({midi, when, dur, amp=0.085}){
+    note({ midi, when, dur, amp, type:"sine", detune:0, filterHz:420 });
+  }
+
+  function pickPattern(ch, when, step){
+    // patrón musical (corcheas): 1-3-2-4-2-3-2-3
+    const idx = [0,2,1,3,1,2,1,2];
+    for(let i=0;i<idx.length;i++){
+      const midi = ch[idx[i]];
+      note({
+        midi,
+        when: when + i*step,
+        dur: step*0.92,
+        amp: 0.11,
+        type: "triangle",
+        detune: (i%2===0 ? -2 : 2),
+        filterHz: 1800
+      });
     }
   }
 
@@ -305,28 +398,57 @@
     if(audioCtx.state === "suspended") audioCtx.resume();
 
     stopRoma();
-    master.gain.setTargetAtTime(0.10, audioCtx.currentTime, 0.02);
+    master.gain.setTargetAtTime(0.12, audioCtx.currentTime, 0.03);
 
+    // “primeros 10s” estilo intro: 107 bpm, 4/4
     const bpm = 107;
     const beat = 60 / bpm;
-    const step = beat / 2;
+    const step = beat / 2;           // corchea
     const start = audioCtx.currentTime + 0.06;
 
+    // Acordes en registro musical
     const B     = [59, 63, 66, 71]; // B3 D#4 F#4 B4
     const Bmaj7 = [59, 63, 66, 70]; // B3 D#4 F#4 A#4
     const Fsh   = [54, 58, 61, 66]; // F#3 A#3 C#4 F#4
     const E     = [52, 56, 59, 64]; // E3 G#3 B3 E4
 
-    const prog = [B, Bmaj7, Fsh, E, B, Bmaj7, Fsh, E];
+    // raíces (bajo)
+    const rootB  = 47; // B2
+    const rootFs = 42; // F#2
+    const rootE  = 40; // E2
+
+    // Secuencia para cubrir ~10s (se corta al llegar a 10s)
+    const prog = [
+      {ch:B,     root:rootB},
+      {ch:Bmaj7, root:rootB},
+      {ch:Fsh,   root:rootFs},
+      {ch:E,     root:rootE},
+      {ch:B,     root:rootB},
+      {ch:Bmaj7, root:rootB},
+      {ch:Fsh,   root:rootFs},
+      {ch:E,     root:rootE},
+    ];
+
     let t = start;
+    for(const bar of prog){
+      const barDur = beat * 4;
 
-    for(const ch of prog){
-      arp(ch, t, step, 8);
-      bell(ch[3], t + step*2, 0.12, 0.05);
-      bell(ch[2], t + step*6, 0.10, 0.045);
+      // pad suave
+      chordPad({ midis: bar.ch, when: t, dur: barDur, amp: 0.032 });
 
-      t += beat * 4; // 1 compás
-      if(t - start >= 10) break;
+      // bajo con 2 pulsos (inicio + mitad)
+      bass({ midi: bar.root, when: t,          dur: beat*1.9, amp: 0.085 });
+      bass({ midi: bar.root, when: t + beat*2, dur: beat*1.9, amp: 0.070 });
+
+      // arpegio
+      pickPattern(bar.ch, t, step);
+
+      // "brillitos" suaves
+      note({ midi: bar.ch[3], when: t + step*3, dur: 0.10, amp: 0.040, type:"sine", detune:0, filterHz:2400 });
+      note({ midi: bar.ch[2], when: t + step*7, dur: 0.10, amp: 0.036, type:"sine", detune:0, filterHz:2400 });
+
+      t += barDur;
+      if(t - start >= 10.0) break;
     }
 
     stopTimer = setTimeout(stopRoma, 10000);
@@ -337,7 +459,7 @@
   });
 
   // =========================
-  // RUN (con manejo de errores visible y botón siempre vuelve)
+  // RUN (con error visible + el botón siempre vuelve)
   // =========================
   async function run(){
     const btn = document.getElementById("runBtn");
@@ -378,7 +500,7 @@
   }
 
   document.getElementById("runBtn").addEventListener("click", () => {
-    playRoma10s(); // ✅ audio 10s sin YouTube
+    playRoma10s();  // ✅ música 10s por código (sin YouTube)
     run();
   });
 </script>
