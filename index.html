@@ -264,27 +264,51 @@
   // =========================
   // 3) Árbol isósceles centrado (GENERADO)
   // =========================
-  function buildTreeLines(h){
-    const width = 2*h - 1;
-    const lines = [];
+function buildTreeLines(h){
+  const width = 2*h - 1;
+  const lines = [];
 
-    // estrella
-    lines.push(centerLine("^", width));
+  // estrella
+  lines.push(centerLine("^", width));
 
-    // copa
-    for(let i=1;i<=h;i++){
-      const leafCount = 2*i - 1;
-      const spaces = (width - leafCount) / 2;
+  // copa (triángulo isósceles perfecto)
+  for(let i=1;i<=h;i++){
+    const leafCount = 2*i - 1;
+    const spaces = (width - leafCount) / 2;
 
-      let row = " ".repeat(spaces);
-      for(let k=0;k<leafCount;k++){
-        // patrón de adornos
-        const pick = (i*13 + k*7) % 12;
-        row += (pick === 0 || pick === 5) ? "o" : "*";
-      }
-      row += " ".repeat(spaces);
-      lines.push(row);
+    let row = " ".repeat(spaces);
+    for(let k=0;k<leafCount;k++){
+      const pick = (i*13 + k*7) % 12;
+      row += (pick === 0 || pick === 5) ? "o" : "*";
     }
+    row += " ".repeat(spaces);
+    lines.push(row);
+  }
+
+  // 👉 BASE EXACTA DEL TRIÁNGULO (última fila)
+  const baseWidth = 2*h - 1;
+
+  // 👉 TRONCO MÁS ANGOSTO Y CENTRADO AL VÉRTICE
+  const trunkWidth = 3; // mWm exacto
+  const trunkPad = Math.floor((baseWidth - trunkWidth) / 2);
+
+  for(let t=0; t<2; t++){
+    lines.push(
+      " ".repeat(trunkPad) +
+      "mWm" +
+      " ".repeat(baseWidth - trunkPad - trunkWidth)
+    );
+  }
+
+  // espacio
+  lines.push("");
+
+  // texto centrado al MISMO ancho del árbol
+  lines.push(centerLine(FINAL_LINE_1, baseWidth));
+  lines.push(centerLine(FINAL_LINE_2, baseWidth));
+
+  return { lines, width: baseWidth };
+}
 
     // tronco
     const trunkWidth = Math.max(3, Math.floor(width * 0.14) | 1); // impar
