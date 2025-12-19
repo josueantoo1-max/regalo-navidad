@@ -20,7 +20,6 @@
       --card:#0f1622;
     }
     *{ box-sizing:border-box; }
-
     body{
       margin:0;
       min-height:100svh;
@@ -32,72 +31,30 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
       color:var(--text);
     }
-
-    .wrap{
-      width:min(900px, 100%);
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-
+    .wrap{ width:min(900px, 100%); display:flex; flex-direction:column; gap:12px; }
     .top{
-      width:100%;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:10px 12px;
-      border:1px solid var(--border);
-      border-radius:12px;
-      background:var(--card);
+      width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--card);
     }
-
     .left{ display:flex; align-items:center; gap:10px; min-width:0; }
     .dots{ display:flex; gap:8px; }
     .dot{ width:10px;height:10px;border-radius:50%; }
-    .redDot{ background:#ff5f57; }
-    .yellowDot{ background:#febc2e; }
-    .greenDot{ background:#28c840; }
-
-    .title{
-      font-size:13px; opacity:.9;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-      max-width:55vw;
-    }
+    .redDot{ background:#ff5f57; } .yellowDot{ background:#febc2e; } .greenDot{ background:#28c840; }
+    .title{ font-size:13px; opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:55vw; }
 
     button{
-      appearance:none;
-      border:1px solid var(--border);
-      background:#162234;
-      color:var(--text);
-      padding:10px 12px;
-      border-radius:10px;
-      font-weight:800;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      touch-action:manipulation;
+      appearance:none; border:1px solid var(--border); background:#162234; color:var(--text);
+      padding:10px 12px; border-radius:10px; font-weight:800; cursor:pointer;
+      display:flex; align-items:center; gap:8px; touch-action:manipulation;
     }
     button:active{ transform:scale(.99); }
     button:disabled{ opacity:.55; cursor:not-allowed; }
 
-    .hint{
-      width:100%;
-      font-size:12px;
-      color:var(--muted);
-      text-align:center;
-    }
-
+    .hint{ width:100%; font-size:12px; color:var(--muted); text-align:center; }
     .screen{
-      width:100%;
-      background:var(--bg);
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:14px;
-      box-shadow:0 16px 40px rgba(0,0,0,.35);
+      width:100%; background:var(--bg); border:1px solid var(--border); border-radius:12px;
+      padding:14px; box-shadow:0 16px 40px rgba(0,0,0,.35);
     }
-
     .log{
       font-size: clamp(12px, 3.2vw, 16px);
       line-height:1.25;
@@ -106,15 +63,7 @@
       margin:0;
       min-height: 4.2em;
     }
-
-    .treeWrap{
-      display:flex;
-      justify-content:center;
-      width:100%;
-      padding-top:10px;
-    }
-
-    /* ✅ Centro real: inline-block dentro de flex center */
+    .treeWrap{ display:flex; justify-content:center; width:100%; padding-top:10px; }
     .tree{
       display:inline-block;
       font-size: clamp(13px, 3.6vw, 20px);
@@ -128,52 +77,27 @@
       user-select:none;
     }
 
-    .g{ color:var(--green); }
-    .r{ color:var(--red); }
-    .b{ color:var(--blue); }
-    .y{ color:var(--yellow); }
-    .o{ color:var(--orange); }
+    .g{ color:var(--green); } .r{ color:var(--red); } .b{ color:var(--blue); } .y{ color:var(--yellow); } .o{ color:var(--orange); }
 
     .footerRow{
-      width:100%;
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-      padding:0 4px;
+      width:100%; display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; padding:0 4px;
     }
     .small{ font-size:12px; color:var(--muted); }
     .toggle{ display:flex; align-items:center; gap:8px; user-select:none; margin-left:auto; }
     input[type="checkbox"]{ width:18px;height:18px; accent-color:#6aa9ff; }
 
     .audioAlert{
-      margin-top:10px;
-      padding:10px 12px;
-      border:1px dashed var(--border);
-      border-radius:12px;
-      background:#0c121c;
-      color:var(--muted);
-      font-size:12px;
-      display:none;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
+      margin-top:10px; padding:10px 12px; border:1px dashed var(--border); border-radius:12px;
+      background:#0c121c; color:var(--muted); font-size:12px; display:none;
+      gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
     }
     .audioAlert strong{ color:var(--text); }
     .audioAlert .btnRow{ display:flex; gap:8px; flex-wrap:wrap; }
     .audioAlert a{
-      color:var(--text);
-      text-decoration:none;
-      border:1px solid var(--border);
-      padding:8px 10px;
-      border-radius:10px;
-      background:#162234;
-      font-weight:700;
+      color:var(--text); text-decoration:none; border:1px solid var(--border);
+      padding:8px 10px; border-radius:10px; background:#162234; font-weight:700;
     }
 
-    /* YouTube player oculto */
     #ytWrap{ position:absolute; width:1px; height:1px; overflow:hidden; left:-9999px; top:-9999px; }
   </style>
 </head>
@@ -196,7 +120,6 @@
 
     <div class="screen">
       <div id="log" class="log"></div>
-
       <div class="treeWrap">
         <div id="tree" class="tree"></div>
       </div>
@@ -226,9 +149,7 @@
   <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-  // =========================
-  // 1) PERSONALIZA
-  // =========================
+  // ========= CONFIG =========
   const YEAR = "2025";
   const FINAL_LINE_1 = "MERRY CHRISTMAS";
   const FINAL_LINE_2 = `And lots of CODE in ${YEAR}`;
@@ -236,18 +157,14 @@
   const CHAR_DELAY_MS = 10;
   const LINE_PAUSE_MS = 70;
 
-  // YouTube 10s
   const YT_VIDEO_ID = "TcSk5ulP-hA";
   const MUSIC_START_S = 0;
   const MUSIC_END_S = 10;
 
-  // Árbol (triángulo isósceles)
   const TREE_HEIGHT = 12;
   const TRUNK_HEIGHT = 2;
 
-  // =========================
-  // 2) Helpers render
-  // =========================
+  // ========= HELPERS =========
   const ornamentColors = ["b","r","y","o"];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -272,17 +189,13 @@
     return -1;
   }
 
-  // =========================
-  // 3) Árbol isósceles + tronco centrado en BASE REAL (marca azul)
-  // =========================
+  // ========= ÁRBOL (triángulo isósceles) + TRONCO centrado sobre BASE REAL (marca azul) =========
   function buildTreeLines(h){
     const width = 2*h - 1;
     const lines = [];
 
-    // estrella
-    lines.push(centerLine("^", width));
+    lines.push(centerLine("^", width)); // estrella
 
-    // copa isósceles
     for(let i=1;i<=h;i++){
       const leafCount = 2*i - 1;
       const spaces = (width - leafCount) / 2;
@@ -296,33 +209,35 @@
       lines.push(row);
     }
 
-    // ✅ Tronco centrado sobre la BASE REAL (última fila de hojas)
-    const baseLine = lines[lines.length - 1]; // última fila de hojas
-    const left = baseLine.search(/\S/);       // primer visible
-    const right = rightMostNonSpaceIndex(baseLine); // último visible
-    const baseCenter = Math.floor((left + right) / 2);
+    // Base REAL = última fila de hojas ya construida
+    const baseLine = lines[lines.length - 1];
+    const left = baseLine.search(/\S/);
+    const right = rightMostNonSpaceIndex(baseLine);
+
+    // seguridad por si algo raro pasa
+    const safeLeft = (left === -1) ? 0 : left;
+    const safeRight = (right === -1) ? (baseLine.length - 1) : right;
+
+    // Centro REAL del “bloque visible” (lo azul)
+    const baseCenter = Math.floor((safeLeft + safeRight) / 2);
 
     const trunkStr = "mWm";
-    const trunkWidth = trunkStr.length;
-    const trunkStart = baseCenter - Math.floor(trunkWidth / 2);
+    const trunkStart = baseCenter - Math.floor(trunkStr.length / 2);
 
-    for(let t=0; t<TRUNK_HEIGHT; t++){
+    for(let t=0;t<TRUNK_HEIGHT;t++){
       const row = Array(baseLine.length).fill(" ");
-      for(let i=0;i<trunkWidth;i++){
+      for(let i=0;i<trunkStr.length;i++){
         const idx = trunkStart + i;
         if(idx >= 0 && idx < row.length) row[idx] = trunkStr[i];
       }
       lines.push(row.join(""));
     }
 
-    // espacio
     lines.push("");
-
-    // texto centrado al mismo ancho
     lines.push(centerLine(FINAL_LINE_1, width));
     lines.push(centerLine(FINAL_LINE_2, width));
 
-    return { lines, width };
+    return lines;
   }
 
   function colorChar(ch, i, lineIndex, wholeLine){
@@ -346,9 +261,7 @@
     tree.innerHTML += "<br/>";
   }
 
-  // =========================
-  // 4) Música: YouTube 10s (más compatible)
-  // =========================
+  // ========= MÚSICA YouTube 10s =========
   let player = null;
   let stopTimer = null;
   let pendingPlay = false;
@@ -410,7 +323,7 @@
       player.setVolume(80);
       player.playVideo();
 
-      // reintento rápido (Safari/Firefox a veces lo necesita)
+      // reintento (Safari/Firefox a veces lo necesita)
       setTimeout(() => {
         try{
           player.unMute();
@@ -419,7 +332,7 @@
         }catch(e){}
       }, 300);
 
-      // detector: si no quedó en "playing", avisamos
+      // detector: si no quedó playing, avisamos
       setTimeout(() => {
         try{
           const state = player.getPlayerState(); // 1 = playing
@@ -448,9 +361,7 @@
     playMusic10s();
   });
 
-  // =========================
-  // 5) RUN
-  // =========================
+  // ========= RUN (con manejo de errores visible) =========
   async function run(){
     const btn = document.getElementById("runBtn");
     const hint = document.getElementById("hintText");
@@ -458,29 +369,40 @@
     const log = document.getElementById("log");
 
     btn.disabled = true;
-    hint.textContent = "Ejecutando… ✨";
-    tree.innerHTML = "";
-    log.textContent = "";
 
-    logLine("> RUN pressed ✅");
-    logLine("> initializing christmas_tree.exe");
-    await sleep(200);
-    logLine("> compiling magic...");
-    await sleep(200);
-    logLine("> rendering tree...");
-    await sleep(250);
+    try{
+      hint.textContent = "Ejecutando… ✨";
+      tree.innerHTML = "";
+      log.textContent = "";
 
-    const { lines } = buildTreeLines(TREE_HEIGHT);
-    for(let i=0;i<lines.length;i++){
-      await typeTreeLine(lines[i], i);
-      await sleep(LINE_PAUSE_MS);
+      logLine("> RUN pressed ✅");
+      logLine("> initializing christmas_tree.exe");
+      await sleep(200);
+      logLine("> compiling magic...");
+      await sleep(200);
+      logLine("> rendering tree...");
+      await sleep(250);
+
+      const lines = buildTreeLines(TREE_HEIGHT);
+      for(let i=0;i<lines.length;i++){
+        await typeTreeLine(lines[i], i);
+        await sleep(LINE_PAUSE_MS);
+      }
+
+      hint.textContent = "🎁 Listo. Feliz Navidad.";
+    }catch(err){
+      hint.textContent = "⚠️ Ocurrió un error.";
+      logLine("");
+      logLine("ERROR:");
+      logLine(String(err && err.stack ? err.stack : err));
+    }finally{
+      btn.disabled = false; // ✅ SIEMPRE vuelve
     }
-
-    hint.textContent = "🎁 Listo. Feliz Navidad.";
   }
 
   document.getElementById("runBtn").addEventListener("click", () => {
-    playMusic10s(); // YouTube 10s
+    // si YouTube se bloquea, al menos el árbol corre (y el error se vería si existiera)
+    playMusic10s();
     run();
   });
 </script>
