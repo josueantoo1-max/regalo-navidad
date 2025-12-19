@@ -51,6 +51,7 @@
     button:disabled{ opacity:.55; cursor:not-allowed; }
 
     .hint{ width:100%; font-size:12px; color:var(--muted); text-align:center; }
+
     .screen{
       width:100%; background:var(--bg); border:1px solid var(--border); border-radius:12px;
       padding:14px; box-shadow:0 16px 40px rgba(0,0,0,.35);
@@ -85,20 +86,6 @@
     .small{ font-size:12px; color:var(--muted); }
     .toggle{ display:flex; align-items:center; gap:8px; user-select:none; margin-left:auto; }
     input[type="checkbox"]{ width:18px;height:18px; accent-color:#6aa9ff; }
-
-    .audioAlert{
-      margin-top:10px; padding:10px 12px; border:1px dashed var(--border); border-radius:12px;
-      background:#0c121c; color:var(--muted); font-size:12px; display:none;
-      gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;
-    }
-    .audioAlert strong{ color:var(--text); }
-    .audioAlert .btnRow{ display:flex; gap:8px; flex-wrap:wrap; }
-    .audioAlert a{
-      color:var(--text); text-decoration:none; border:1px solid var(--border);
-      padding:8px 10px; border-radius:10px; background:#162234; font-weight:700;
-    }
-
-    #ytWrap{ position:absolute; width:1px; height:1px; overflow:hidden; left:-9999px; top:-9999px; }
   </style>
 </head>
 
@@ -123,21 +110,10 @@
       <div class="treeWrap">
         <div id="tree" class="tree"></div>
       </div>
-
-      <div id="audioAlert" class="audioAlert">
-        <div>
-          <strong>Audio bloqueado por el navegador.</strong><br>
-          Abre el audio en YouTube o desactiva bloqueo/seguimiento para este sitio.
-        </div>
-        <div class="btnRow">
-          <a id="ytOpen" href="#" target="_blank" rel="noopener">Abrir en YouTube</a>
-          <a id="retryAudio" href="#">Reintentar</a>
-        </div>
-      </div>
     </div>
 
     <div class="footerRow">
-      <div class="small">Tip: En Firefox/Safari puede bloquearse el audio embebido. RUN lo intenta igual.</div>
+      <div class="small">Tip: Si no escuchas música, revisa el volumen del celular.</div>
       <label class="toggle small">
         <input id="musicToggle" type="checkbox" checked />
         Música (on/off)
@@ -145,11 +121,10 @@
     </div>
   </div>
 
-  <div id="ytWrap"><div id="ytplayer"></div></div>
-  <script src="https://www.youtube.com/iframe_api"></script>
-
 <script>
-  // ========= CONFIG =========
+  // =========================
+  // CONFIG
+  // =========================
   const YEAR = "2025";
   const FINAL_LINE_1 = "MERRY CHRISTMAS";
   const FINAL_LINE_2 = `And lots of CODE in ${YEAR}`;
@@ -157,14 +132,13 @@
   const CHAR_DELAY_MS = 10;
   const LINE_PAUSE_MS = 70;
 
-  const YT_VIDEO_ID = "TcSk5ulP-hA";
-  const MUSIC_START_S = 0;
-  const MUSIC_END_S = 10;
-
+  // Árbol (triángulo isósceles)
   const TREE_HEIGHT = 12;
   const TRUNK_HEIGHT = 2;
 
-  // ========= HELPERS =========
+  // =========================
+  // HELPERS
+  // =========================
   const ornamentColors = ["b","r","y","o"];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -172,30 +146,31 @@
     return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
             .replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
-
   function logLine(s){
     const log = document.getElementById("log");
     log.textContent += (log.textContent ? "\n" : "") + s;
   }
-
   function centerLine(text, width){
     if(text.length >= width) return text;
     const pad = Math.floor((width - text.length)/2);
     return " ".repeat(pad) + text + " ".repeat(width - pad - text.length);
   }
-
   function rightMostNonSpaceIndex(s){
     for(let i=s.length-1;i>=0;i--) if(s[i] !== " ") return i;
     return -1;
   }
 
-  // ========= ÁRBOL (triángulo isósceles) + TRONCO centrado sobre BASE REAL (marca azul) =========
+  // =========================
+  // ÁRBOL isósceles + TRONCO centrado sobre BASE REAL (marca azul)
+  // =========================
   function buildTreeLines(h){
     const width = 2*h - 1;
     const lines = [];
 
-    lines.push(centerLine("^", width)); // estrella
+    // estrella
+    lines.push(centerLine("^", width));
 
+    // copa
     for(let i=1;i<=h;i++){
       const leafCount = 2*i - 1;
       const spaces = (width - leafCount) / 2;
@@ -209,16 +184,12 @@
       lines.push(row);
     }
 
-    // Base REAL = última fila de hojas ya construida
+    // tronco centrado al centro "real" de la base visible
     const baseLine = lines[lines.length - 1];
     const left = baseLine.search(/\S/);
     const right = rightMostNonSpaceIndex(baseLine);
-
-    // seguridad por si algo raro pasa
     const safeLeft = (left === -1) ? 0 : left;
     const safeRight = (right === -1) ? (baseLine.length - 1) : right;
-
-    // Centro REAL del “bloque visible” (lo azul)
     const baseCenter = Math.floor((safeLeft + safeRight) / 2);
 
     const trunkStr = "mWm";
@@ -261,107 +232,113 @@
     tree.innerHTML += "<br/>";
   }
 
-  // ========= MÚSICA YouTube 10s =========
-  let player = null;
-  let stopTimer = null;
-  let pendingPlay = false;
+  // =========================
+  // AUDIO (10s) por código: progresión B / Bmaj7 / F# / E @ 107 bpm
+  // =========================
+  let audioCtx = null, master = null, stopTimer = null;
 
-  const audioAlert = document.getElementById("audioAlert");
-  const ytOpen = document.getElementById("ytOpen");
-  const retryAudio = document.getElementById("retryAudio");
-  ytOpen.href = `https://www.youtube.com/watch?v=${YT_VIDEO_ID}`;
-
-  function showAudioAlert(){ audioAlert.style.display = "flex"; }
-  function hideAudioAlert(){ audioAlert.style.display = "none"; }
-
-  window.onYouTubeIframeAPIReady = function(){
-    player = new YT.Player("ytplayer", {
-      height:"0",
-      width:"0",
-      videoId: YT_VIDEO_ID,
-      playerVars: {
-        autoplay: 0,
-        controls: 0,
-        rel: 0,
-        modestbranding: 1,
-        playsinline: 1,
-        origin: location.origin
-      },
-      events: {
-        onReady: () => {
-          if(pendingPlay){
-            pendingPlay = false;
-            playMusic10s();
-          }
-        }
-      }
-    });
-  };
-
-  function stopMusic(){
+  function ensureAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      master = audioCtx.createGain();
+      master.gain.value = 0.10; // volumen suave
+      master.connect(audioCtx.destination);
+    }
+  }
+  function stopRoma(){
     if(stopTimer) clearTimeout(stopTimer);
     stopTimer = null;
-    try{ if(player) player.stopVideo(); }catch(e){}
+    try{
+      if(master && audioCtx){
+        master.gain.cancelScheduledValues(audioCtx.currentTime);
+        master.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.03);
+      }
+    }catch(e){}
+  }
+  function m2f(m){ return 440 * Math.pow(2, (m-69)/12); }
+
+  function pluck(midi, when, dur, amp=0.14){
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(m2f(midi), when);
+
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(amp, when + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+
+    osc.connect(gain);
+    gain.connect(master);
+
+    osc.start(when);
+    osc.stop(when + dur + 0.02);
   }
 
-  function playMusic10s(){
+  function bell(midi, when, dur, amp=0.06){
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(m2f(midi), when);
+
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(amp, when + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+
+    osc.connect(gain);
+    gain.connect(master);
+
+    osc.start(when);
+    osc.stop(when + dur + 0.02);
+  }
+
+  function arp(chord, start, step, count){
+    for(let i=0;i<count;i++){
+      pluck(chord[i % chord.length], start + i*step, step*0.95, 0.13);
+    }
+  }
+
+  function playRoma10s(){
     const toggle = document.getElementById("musicToggle");
     if(!toggle.checked) return;
 
-    hideAudioAlert();
-    stopMusic();
+    ensureAudio();
+    if(audioCtx.state === "suspended") audioCtx.resume();
 
-    if(!player || typeof player.playVideo !== "function"){
-      pendingPlay = true;
-      showAudioAlert();
-      return;
+    stopRoma();
+    master.gain.setTargetAtTime(0.10, audioCtx.currentTime, 0.02);
+
+    const bpm = 107;
+    const beat = 60 / bpm;
+    const step = beat / 2;
+    const start = audioCtx.currentTime + 0.06;
+
+    const B     = [59, 63, 66, 71]; // B3 D#4 F#4 B4
+    const Bmaj7 = [59, 63, 66, 70]; // B3 D#4 F#4 A#4
+    const Fsh   = [54, 58, 61, 66]; // F#3 A#3 C#4 F#4
+    const E     = [52, 56, 59, 64]; // E3 G#3 B3 E4
+
+    const prog = [B, Bmaj7, Fsh, E, B, Bmaj7, Fsh, E];
+    let t = start;
+
+    for(const ch of prog){
+      arp(ch, t, step, 8);
+      bell(ch[3], t + step*2, 0.12, 0.05);
+      bell(ch[2], t + step*6, 0.10, 0.045);
+
+      t += beat * 4; // 1 compás
+      if(t - start >= 10) break;
     }
 
-    try{
-      player.seekTo(MUSIC_START_S, true);
-      player.unMute();
-      player.setVolume(80);
-      player.playVideo();
-
-      // reintento (Safari/Firefox a veces lo necesita)
-      setTimeout(() => {
-        try{
-          player.unMute();
-          player.setVolume(80);
-          player.playVideo();
-        }catch(e){}
-      }, 300);
-
-      // detector: si no quedó playing, avisamos
-      setTimeout(() => {
-        try{
-          const state = player.getPlayerState(); // 1 = playing
-          const muted = player.isMuted && player.isMuted();
-          if(state !== 1 || muted) showAudioAlert();
-        }catch(e){
-          showAudioAlert();
-        }
-      }, 900);
-
-      const durationMs = Math.max(0, (MUSIC_END_S - MUSIC_START_S) * 1000);
-      stopTimer = setTimeout(() => {
-        try{ player.stopVideo(); }catch(e){}
-      }, durationMs);
-    }catch(e){
-      showAudioAlert();
-    }
+    stopTimer = setTimeout(stopRoma, 10000);
   }
 
   document.getElementById("musicToggle").addEventListener("change", (e) => {
-    if(!e.target.checked) stopMusic();
+    if(!e.target.checked) stopRoma();
   });
 
-  retryAudio.addEventListener("click", (e) => {
-    e.preventDefault();
-    playMusic10s();
-  });
-
-  // ========= RUN (con manejo de errores visible) =========
+  // =========================
+  // RUN (con manejo de errores visible y botón siempre vuelve)
+  // =========================
   async function run(){
     const btn = document.getElementById("runBtn");
     const hint = document.getElementById("hintText");
@@ -396,13 +373,12 @@
       logLine("ERROR:");
       logLine(String(err && err.stack ? err.stack : err));
     }finally{
-      btn.disabled = false; // ✅ SIEMPRE vuelve
+      btn.disabled = false;
     }
   }
 
   document.getElementById("runBtn").addEventListener("click", () => {
-    // si YouTube se bloquea, al menos el árbol corre (y el error se vería si existiera)
-    playMusic10s();
+    playRoma10s(); // ✅ audio 10s sin YouTube
     run();
   });
 </script>
