@@ -17,6 +17,7 @@
       --text:#e8e8e8;
       --muted:#aeb7c2;
       --border:#273140;
+      --card:#0f1622;
     }
     *{ box-sizing:border-box; }
 
@@ -48,7 +49,7 @@
       padding:10px 12px;
       border:1px solid var(--border);
       border-radius:12px;
-      background:#0f1622;
+      background:var(--card);
     }
 
     .left{ display:flex; align-items:center; gap:10px; min-width:0; }
@@ -113,7 +114,9 @@
       padding-top:10px;
     }
 
+    /* ✅ Centro real: el árbol es inline-block dentro de flex center */
     .tree{
+      display:inline-block;
       font-size: clamp(13px, 3.6vw, 20px);
       line-height:1.05;
       white-space:pre;
@@ -122,8 +125,6 @@
       overflow:auto;
       max-height: 58svh;
       padding-bottom:6px;
-      /* ✅ micro-ajuste: empuja un pelín a la izquierda si tu ojo lo necesita */
-      transform: translateX(-10px);
     }
 
     .g{ color:var(--green); }
@@ -145,7 +146,35 @@
     .toggle{ display:flex; align-items:center; gap:8px; user-select:none; margin-left:auto; }
     input[type="checkbox"]{ width:18px;height:18px; accent-color:#6aa9ff; }
 
-    /* YouTube player oculto (solo audio) */
+    /* Aviso audio */
+    .audioAlert{
+      margin-top:10px;
+      padding:10px 12px;
+      border:1px dashed var(--border);
+      border-radius:12px;
+      background:#0c121c;
+      color:var(--muted);
+      font-size:12px;
+      display:none;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .audioAlert strong{ color:var(--text); }
+    .audioAlert .btnRow{ display:flex; gap:8px; flex-wrap:wrap; }
+    .audioAlert a{
+      color:var(--text);
+      text-decoration:none;
+      border:1px solid var(--border);
+      padding:8px 10px;
+      border-radius:10px;
+      background:#162234;
+      font-weight:700;
+    }
+    .audioAlert a:active{ transform:scale(.99); }
+
+    /* YouTube player oculto */
     #ytWrap{ position:absolute; width:1px; height:1px; overflow:hidden; left:-9999px; top:-9999px; }
   </style>
 </head>
@@ -168,13 +197,25 @@
 
     <div class="screen">
       <div id="log" class="log"></div>
+
       <div class="treeWrap">
         <div id="tree" class="tree"></div>
+      </div>
+
+      <div id="audioAlert" class="audioAlert">
+        <div>
+          <strong>Audio bloqueado por el navegador.</strong><br>
+          Si no escuchas música, abre el audio en YouTube o desactiva el bloqueo de audio/seguimiento para este sitio.
+        </div>
+        <div class="btnRow">
+          <a id="ytOpen" href="#" target="_blank" rel="noopener">Abrir en YouTube</a>
+          <a id="retryAudio" href="#">Reintentar</a>
+        </div>
       </div>
     </div>
 
     <div class="footerRow">
-      <div class="small">Tip: Si no escuchas música, revisa el volumen del celular.</div>
+      <div class="small">Tip: En Firefox/Safari puede bloquearse el audio embebido. RUN lo intenta igual.</div>
       <label class="toggle small">
         <input id="musicToggle" type="checkbox" checked />
         Música (on/off)
@@ -186,7 +227,9 @@
   <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-  // ========= PERSONALIZA =========
+  // =========================
+  // 1) PERSONALIZA
+  // =========================
   const YEAR = "2025";
   const FINAL_LINE_1 = "MERRY CHRISTMAS";
   const FINAL_LINE_2 = `And lots of CODE in ${YEAR}`;
@@ -194,53 +237,85 @@
   const CHAR_DELAY_MS = 10;
   const LINE_PAUSE_MS = 70;
 
-  // ✅ YouTube: 10s
+  // YouTube 10s
   const YT_VIDEO_ID = "TcSk5ulP-hA";
   const MUSIC_START_S = 0;
   const MUSIC_END_S = 10;
 
-  // ========= ÁRBOL MÁS CENTRADO =========
-  // Le recorté espacios iniciales vs tu versión anterior para que quede mejor centrado.
-  const art = [
-"          *",
-"         *o*",
-"        *o*o*",
-"       ***o***",
-"      *o*****o*",
-"     ***o***o***",
-"    *o***o*o***o*",
-"   *o*o*o*****o*o*",
-"  *o***o***o***o***o*",
-" *o*o*o*o*****o*o*o*o*",
-"*o***o***o***o***o***o*",
-"*o*o*o*o*o*****o*o*o*o*o*",
-"",
-"         mWm",
-"         mWm",
-"",
-`      ${FINAL_LINE_1}`,
-`   ${FINAL_LINE_2}`
-  ];
+  // Árbol (isosceles)
+  const TREE_HEIGHT = 12; // sube/baja
+  const TRUNK_HEIGHT = 2;
 
+  // =========================
+  // 2) Helpers render
+  // =========================
   const ornamentColors = ["b","r","y","o"];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
   function esc(s){
     return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
             .replaceAll('"',"&quot;").replaceAll("'","&#039;");
   }
 
-  function colorChar(ch, i, lineIndex, wholeLine){
-    if(wholeLine.includes(FINAL_LINE_1) || wholeLine.includes(FINAL_LINE_2)) return "r";
-    if(ch === "*") return "g";
-    if(ch === "o") return ornamentColors[(i + lineIndex*3) % ornamentColors.length];
-    if("mW".includes(ch)) return "y";
-    return null;
-  }
-
   function logLine(s){
     const log = document.getElementById("log");
     log.textContent += (log.textContent ? "\n" : "") + s;
+  }
+
+  // =========================
+  // 3) Árbol isósceles centrado (GENERADO)
+  // =========================
+  function buildTreeLines(h){
+    const width = 2*h - 1;
+    const lines = [];
+
+    // estrella
+    lines.push(centerLine("^", width));
+
+    // copa
+    for(let i=1;i<=h;i++){
+      const leafCount = 2*i - 1;
+      const spaces = (width - leafCount) / 2;
+
+      let row = " ".repeat(spaces);
+      for(let k=0;k<leafCount;k++){
+        // patrón de adornos
+        const pick = (i*13 + k*7) % 12;
+        row += (pick === 0 || pick === 5) ? "o" : "*";
+      }
+      row += " ".repeat(spaces);
+      lines.push(row);
+    }
+
+    // tronco
+    const trunkWidth = Math.max(3, Math.floor(width * 0.14) | 1); // impar
+    const trunk = "mWm".slice(0, Math.min(3, trunkWidth)); // estilo original
+    const trunkPad = Math.floor((width - trunk.length)/2);
+    for(let t=0;t<TRUNK_HEIGHT;t++){
+      lines.push(" ".repeat(trunkPad) + trunk + " ".repeat(width - trunkPad - trunk.length));
+    }
+
+    // espacio
+    lines.push("");
+    // texto final centrado al ancho del árbol
+    lines.push(centerLine(FINAL_LINE_1, width));
+    lines.push(centerLine(FINAL_LINE_2, width));
+
+    return { lines, width };
+  }
+
+  function centerLine(text, width){
+    if(text.length >= width) return text;
+    const pad = Math.floor((width - text.length)/2);
+    return " ".repeat(pad) + text + " ".repeat(width - pad - text.length);
+  }
+
+  function colorChar(ch, i, lineIndex, wholeLine){
+    if(wholeLine.includes(FINAL_LINE_1) || wholeLine.includes(FINAL_LINE_2)) return "r";
+    if(ch === "^") return "y";           // estrella
+    if(ch === "*") return "g";           // hojas
+    if(ch === "o") return ornamentColors[(i + lineIndex*3) % ornamentColors.length];
+    if("mW".includes(ch)) return "y";    // tronco
+    return null;
   }
 
   async function typeTreeLine(line, lineIndex){
@@ -255,11 +330,82 @@
     tree.innerHTML += "<br/>";
   }
 
-  // ========= MÚSICA: YouTube 10s =========
+  // =========================
+  // 4) Música: YouTube 10s + fallback (WebAudio) si se bloquea
+  // =========================
   let player = null;
   let stopTimer = null;
   let pendingPlay = false;
 
+  const audioAlert = document.getElementById("audioAlert");
+  const ytOpen = document.getElementById("ytOpen");
+  const retryAudio = document.getElementById("retryAudio");
+  ytOpen.href = `https://www.youtube.com/watch?v=${YT_VIDEO_ID}`;
+
+  function showAudioAlert(){
+    audioAlert.style.display = "flex";
+  }
+  function hideAudioAlert(){
+    audioAlert.style.display = "none";
+  }
+
+  // --- WebAudio fallback (suave, 10s) ---
+  let audioCtx = null, master = null, stopSynthTimer = null;
+  function ensureAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      master = audioCtx.createGain();
+      master.gain.value = 0.10;
+      master.connect(audioCtx.destination);
+    }
+  }
+  function stopSynth(){
+    if(stopSynthTimer) clearTimeout(stopSynthTimer);
+    stopSynthTimer = null;
+    try{
+      if(master && audioCtx){
+        master.gain.cancelScheduledValues(audioCtx.currentTime);
+        master.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.03);
+      }
+    }catch(e){}
+  }
+  function playSynth10s(){
+    ensureAudio();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+
+    const start = audioCtx.currentTime + 0.03;
+    // mini-melodía suave tipo campanitas
+    const seq = [
+      [659.25,0.22],[659.25,0.22],[659.25,0.45],
+      [659.25,0.22],[659.25,0.22],[659.25,0.45],
+      [659.25,0.22],[783.99,0.22],[523.25,0.22],[587.33,0.22],[659.25,0.80],
+    ];
+    let t = start;
+
+    for(const [f,d] of seq){
+      beep(f,d,t);
+      t += d*1.08;
+      if(t-start > 9.6) break;
+    }
+    stopSynthTimer = setTimeout(stopSynth, 10000);
+  }
+  function beep(freq, dur, when){
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, when);
+
+    gain.gain.setValueAtTime(0.0001, when);
+    gain.gain.exponentialRampToValueAtTime(0.15, when + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start(when);
+    osc.stop(when + dur + 0.02);
+  }
+
+  // --- YouTube API ---
   window.onYouTubeIframeAPIReady = function(){
     player = new YT.Player("ytplayer", {
       height:"0",
@@ -270,7 +416,8 @@
         controls: 0,
         rel: 0,
         modestbranding: 1,
-        playsinline: 1
+        playsinline: 1,
+        origin: location.origin
       },
       events: {
         onReady: () => {
@@ -287,28 +434,54 @@
     if(stopTimer) clearTimeout(stopTimer);
     stopTimer = null;
     try{ if(player) player.stopVideo(); }catch(e){}
+    stopSynth();
   }
 
   function playMusic10s(){
     const toggle = document.getElementById("musicToggle");
     if(!toggle.checked) return;
 
+    hideAudioAlert();
+    stopMusic();
+
+    // si YouTube no está listo aún
     if(!player || typeof player.playVideo !== "function"){
-      pendingPlay = true; // si aún no carga YouTube, lo reproduce cuando esté listo
+      pendingPlay = true;
+      // mientras carga, ponemos fallback suave (para no dejar silencio)
+      playSynth10s();
       return;
     }
 
-    stopMusic();
     try{
       player.seekTo(MUSIC_START_S, true);
+      player.unMute();
+      player.setVolume(80);
       player.playVideo();
+
+      // ✅ detector de bloqueo: si en ~1s no está sonando, mostramos alerta y usamos fallback
+      setTimeout(() => {
+        try{
+          const state = player.getPlayerState(); // 1 = playing
+          const muted = player.isMuted && player.isMuted();
+          if(state !== 1 || muted){
+            showAudioAlert();
+            // fallback para que siempre haya música
+            playSynth10s();
+          }
+        }catch(e){
+          showAudioAlert();
+          playSynth10s();
+        }
+      }, 900);
 
       const durationMs = Math.max(0, (MUSIC_END_S - MUSIC_START_S) * 1000);
       stopTimer = setTimeout(() => {
         try{ player.stopVideo(); }catch(e){}
       }, durationMs);
     }catch(e){
-      // si el navegador bloquea, no rompemos el resto
+      // bloqueado: mostramos alerta + fallback
+      showAudioAlert();
+      playSynth10s();
     }
   }
 
@@ -316,7 +489,14 @@
     if(!e.target.checked) stopMusic();
   });
 
-  // ========= RUN =========
+  retryAudio.addEventListener("click", (e) => {
+    e.preventDefault();
+    playMusic10s();
+  });
+
+  // =========================
+  // 5) RUN
+  // =========================
   async function run(){
     const btn = document.getElementById("runBtn");
     const hint = document.getElementById("hintText");
@@ -336,8 +516,9 @@
     logLine("> rendering tree...");
     await sleep(250);
 
-    for(let i=0;i<art.length;i++){
-      await typeTreeLine(art[i], i);
+    const { lines } = buildTreeLines(TREE_HEIGHT);
+    for(let i=0;i<lines.length;i++){
+      await typeTreeLine(lines[i], i);
       await sleep(LINE_PAUSE_MS);
     }
 
@@ -345,7 +526,7 @@
   }
 
   document.getElementById("runBtn").addEventListener("click", () => {
-    playMusic10s(); // ✅ YouTube 10s
+    playMusic10s(); // YouTube 10s (y fallback si el navegador lo bloquea)
     run();
   });
 </script>
